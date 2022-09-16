@@ -1,0 +1,7 @@
+name = "ConvolutionKernel"
+uuid = "f2da46ed-aadf-4121-926c-31522e964e90"
+authors = ["Michael Fiano <mail@mfiano.net> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1.8"
