@@ -39,17 +39,28 @@ end
 @inline _filter(f, kernel) = kernel |> Filter(f)
 @inline _count(f, kernel) = _filter(f, kernel) |> Count()
 
-function Transducers.__foldl__(rf::F, val, kernel::Kernel) where {F}
+function Transducers.asfoldable(kernel::Kernel)
     origin = kernel.origin
     ex, ey = kernel.extents
-    for (x, y) in Iterators.product(-ex:ex, -ey:ey)
-        (gx, gy) = (x, y) .+ origin
-        if _in_bounds(kernel, gx, gy) && in_shape(kernel, x, y)
-            val = Transducers.@next(rf, val, @inbounds kernel.grid[gx, gy])
-        end
-    end
-    Transducers.complete(rf, val)
+    Iterators.product(-ex:ex, -ey:ey) |>
+        Filter(pos -> _in_bounds(kernel, (pos .+ origin)...) && in_shape(kernel, pos...)) |>
+        Map(pos -> @inbounds kernel.grid[(pos .+ origin)...])
 end
+
+function Base.iterate(k::Kernel)
+    foldable = Transducers.asfoldable(k)
+    res = iterate(foldable)
+    isnothing(res) && return res
+    x, s = res
+    x, (foldable, s)
+end
+function Base.iterate(::Kernel, (foldable, s))
+    res = iterate(foldable, s)
+    isnothing(res) && return res
+    x, s = res
+    x, (foldable, s)
+end
+Base.IteratorSize(::Type{<:Kernel}) = Base.SizeUnknown()
 
 align(kernel::Kernel, cell::Cell) = @set kernel.origin = (cell.x, cell.y)
 focused(kernel::Kernel) = kernel.grid[kernel.origin...]
