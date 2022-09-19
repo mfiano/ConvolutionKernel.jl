@@ -54,12 +54,14 @@ function Base.iterate(k::Kernel)
     x, s = res
     x, (foldable, s)
 end
+
 function Base.iterate(::Kernel, (foldable, s))
     res = iterate(foldable, s)
     isnothing(res) && return res
     x, s = res
     x, (foldable, s)
 end
+
 Base.IteratorSize(::Type{<:Kernel}) = Base.SizeUnknown()
 
 align(kernel::Kernel, cell::Cell) = @set kernel.origin = (cell.x, cell.y)
